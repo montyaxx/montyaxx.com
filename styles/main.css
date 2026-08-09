@@ -1,4 +1,31 @@
-@import url('https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
+/* ============================================================
+   Variáveis Globais
+   ============================================================ */
+
+:root {
+  --bg-dark: #000000;
+  --card-border: rgba(255, 255, 255, 0.08);
+  --text-main: #ffffff;
+  --text-muted: #9ca3af;
+  --accent-purple: #5865f2;
+  --spotify-green: #1db954;
+
+  --status-online: #23a55a;
+  --status-idle: #f0b232;
+  --status-dnd: #f23f43;
+  --status-offline: #80848e;
+
+  --font-main: 'Google Sans', 'Plus Jakarta Sans', sans-serif;
+  --radius-card: 24px;
+  --radius-pill: 9999px;
+  --transition-smooth: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ============================================================
+   Reset & Base
+   ============================================================ */
 
 * {
   margin: 0;
@@ -7,37 +34,670 @@
 }
 
 body {
-  background-color: #000000;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  min-height: 100vh;
+  font-family: var(--font-main);
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Canvas fixo no fundo, atrás de todo o conteúdo */
+#bg-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Container principal centraliza o conteúdo acima do canvas */
+.app-container {
+  position: relative;
+  z-index: 1;
   min-height: 100vh;
   display: grid;
   place-items: center;
-  font-family: 'Google Sans', sans-serif;
+  padding: 1.5rem;
 }
 
-.container {
-  animation: float 3s ease-in-out infinite;
+/* ============================================================
+   Tela Inicial
+   ============================================================ */
+
+.intro-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
+  height: 100vh;
+  position: absolute;
+  top: 0;
+  left: 0;
+  transition: opacity 0.5s ease, transform 0.5s ease, filter 0.5s ease;
+}
+
+/* Área clicável que dispara a transição para o perfil */
+.title-wrapper {
+  cursor: pointer;
+  padding: 2rem 3.5rem;
+  border-radius: var(--radius-card);
+  user-select: none;
+  animation: float 3.5s ease-in-out infinite;
+  transition: var(--transition-smooth);
+}
+
+.title-wrapper:hover {
+  transform: scale(1.08);
+}
+
+.title-wrapper:hover .title {
+  text-shadow: 0 0 35px rgba(255, 255, 255, 0.7), 0 0 70px rgba(88, 101, 242, 0.4);
 }
 
 .title {
   color: #ffffff;
-  font-size: 3rem;
+  font-size: 3.8rem;
   font-weight: 500;
   letter-spacing: 2px;
-  text-decoration: none;
   display: inline-block;
-  transition: all 0.3s ease;
+  transition: var(--transition-smooth);
 }
 
-.title:hover {
-  transform: scale(1.15);
-  text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+/* Estado de saída: a intro some com fade + blur ao abrir o perfil */
+.intro-screen.fade-out {
+  opacity: 0;
+  transform: scale(0.92);
+  filter: blur(8px);
+  pointer-events: none;
 }
+
+/* ============================================================
+   Card de Perfil
+   ============================================================ */
+
+.profile-section {
+  width: 100%;
+  max-width: 820px;
+  margin: auto;
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Estado oculto: posicionado fora do fluxo para não bloquear a intro */
+.profile-section.hidden {
+  opacity: 0;
+  transform: translateY(25px) scale(0.95);
+  pointer-events: none;
+  position: absolute;
+}
+
+.horizontal-card {
+  background: rgba(18, 18, 25, 0.30);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-card);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.35), 0 0 40px rgba(88, 101, 242, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+/*
+  Banner do perfil.
+  A máscara em gradiente dissolve a borda inferior do banner,
+  terminando aproximadamente no centro vertical do avatar.
+*/
+.card-banner {
+  height: 140px;
+  width: 100%;
+  background-image: url('../images/banner.png');
+  background-size: cover;
+  background-position: center top;
+  position: relative;
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.65) 50%, rgba(0, 0, 0, 0) 100%);
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.65) 50%, rgba(0, 0, 0, 0) 100%);
+  transition: var(--transition-smooth);
+}
+
+/* Corpo do card em layout horizontal; sobe sobre o banner via margin negativa */
+.horizontal-card-body {
+  display: flex;
+  gap: 1.3rem;
+  align-items: flex-start;
+  padding: 0 2.2rem 1.25rem 2.2rem;
+  margin-top: -50px;
+  position: relative;
+  z-index: 2;
+}
+
+/* ---- Coluna esquerda: avatar e botão de copiar tag ---- */
+
+.profile-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  flex-shrink: 0;
+}
+
+/* O fundo preto do wrapper cria o anel de separação entre o avatar e o banner */
+.avatar-wrapper {
+  position: relative;
+  width: 98px;
+  height: 98px;
+  border-radius: 50%;
+  background: #000000;
+  padding: 4px;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Indicador de status posicionado no canto inferior direito do avatar */
+.status-badge {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background-color: #000000;
+  display: grid;
+  place-items: center;
+  padding: 3px;
+}
+
+.status-indicator {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-color: var(--status-offline);
+  transition: var(--transition-smooth);
+}
+
+.status-badge.online .status-indicator {
+  background-color: var(--status-online);
+  box-shadow: 0 0 10px var(--status-online);
+}
+
+.status-badge.idle .status-indicator {
+  background-color: var(--status-idle);
+  box-shadow: 0 0 10px var(--status-idle);
+}
+
+.status-badge.dnd .status-indicator {
+  background-color: var(--status-dnd);
+  box-shadow: 0 0 10px var(--status-dnd);
+}
+
+.status-badge.offline .status-indicator {
+  background-color: var(--status-offline);
+}
+
+/* Botão de copiar a tag do Discord */
+.copy-tag-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-main);
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-main);
+  font-size: 0.82rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.copy-tag-btn i.fa-discord {
+  color: var(--accent-purple);
+  font-size: 0.95rem;
+}
+
+.copy-tag-btn .copy-icon {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.copy-tag-btn:hover {
+  background: rgba(88, 101, 242, 0.25);
+  border-color: rgba(88, 101, 242, 0.4);
+  transform: translateY(-2px);
+}
+
+/* ---- Coluna direita: nome e atividade ---- */
+
+.profile-right {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding-top: 0.4rem;
+}
+
+.user-header {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+}
+
+.user-titles {
+  display: flex;
+  align-items: center;
+}
+
+.user-name {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.5px;
+  line-height: 1;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+}
+
+/* Caixa de atividade: exibe Spotify, jogo ou status padrão */
+.activity-box {
+  background: rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 0.9rem 1.1rem;
+  transition: var(--transition-smooth);
+}
+
+/* Estado de carregamento inicial */
+.activity-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+/* ---- Atividade: Spotify ---- */
+
+.spotify-activity {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.spotify-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--spotify-green);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.spotify-content {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.spotify-album-art {
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  object-fit: cover;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+.spotify-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.spotify-song {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spotify-artist {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 0.1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spotify-progress-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.spotify-bar-bg {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+/* Largura atualizada via JS a cada segundo */
+.spotify-bar-fill {
+  height: 100%;
+  background: var(--spotify-green);
+  width: 0%;
+  border-radius: 2px;
+  transition: width 0.3s linear;
+}
+
+.spotify-timestamps {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+/* ---- Atividade: Jogo / Rich Presence ---- */
+
+.game-activity {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.game-icon-img {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.game-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.game-label {
+  font-size: 0.72rem;
+  color: var(--accent-purple);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.game-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.game-state {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* ---- Atividade: estado padrão / offline ---- */
+
+.default-activity {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.default-activity i {
+  color: var(--accent-purple);
+}
+
+/* ============================================================
+   Divisória e Barra de Links
+   ============================================================ */
+
+/* Linha centralizada com bordas transparentes para não encostar nas laterais */
+.divider-line {
+  width: 65%;
+  height: 1px;
+  margin: 0.5rem auto 0 auto;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.12) 25%, rgba(255, 255, 255, 0.12) 75%, transparent 100%);
+}
+
+.icons-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2.4rem;
+  padding: 1.25rem 2rem 1.75rem 2rem;
+}
+
+/* Base de cada ícone de link */
+.icon-link {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
+  font-size: 1.35rem;
+  text-decoration: none;
+  transition: var(--transition-smooth);
+}
+
+.icon-link:hover {
+  transform: translateY(-4px) scale(1.18);
+  color: #ffffff;
+}
+
+/* Imagens PNG usadas no lugar dos ícones FontAwesome */
+.custom-icon-img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  border-radius: 6px;
+  transition: var(--transition-smooth);
+  filter: brightness(0.75);
+}
+
+.icon-link:hover .custom-icon-img {
+  filter: brightness(1);
+}
+
+/* O ícone do Minecraft Overlay fica sem saturação em repouso */
+.mc-icon .custom-icon-img {
+  filter: grayscale(1) brightness(0.75);
+}
+
+.mc-icon:hover .custom-icon-img {
+  filter: grayscale(0) brightness(1);
+}
+
+/* ---- Cores de hover por plataforma ---- */
+
+.github-icon:hover {
+  background: #24292e;
+  color: #ffffff;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+}
+
+.laby-icon:hover {
+  background: #3b82f6;
+  color: #ffffff;
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+}
+
+.steam-icon:hover {
+  background: #171a21;
+  color: #66c0f4;
+  box-shadow: 0 0 15px rgba(102, 192, 244, 0.5);
+}
+
+.mc-icon:hover {
+  background: linear-gradient(135deg, #ff0b00, #ff7600);
+  color: #ffffff;
+  box-shadow: 0 0 15px rgba(255, 80, 0, 0.55);
+}
+
+.spotify-icon:hover {
+  background: #1db954;
+  color: #000000;
+  box-shadow: 0 0 15px rgba(29, 185, 84, 0.5);
+}
+
+/* ---- Tooltip exibido ao passar o mouse ---- */
+
+.icon-link::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: rgba(18, 20, 28, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.35rem 0.7rem;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+  transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
+  z-index: 100;
+}
+
+/* Setinha do tooltip */
+.icon-link::before {
+  content: '';
+  position: absolute;
+  bottom: 110%;
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  border-width: 5px 5px 0 5px;
+  border-style: solid;
+  border-color: rgba(18, 20, 28, 0.95) transparent transparent transparent;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
+  z-index: 100;
+}
+
+.icon-link:hover::after,
+.icon-link:hover::before {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ============================================================
+   Toast de Notificação
+   ============================================================ */
+
+.toast-container {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+
+.toast {
+  background: rgba(14, 17, 26, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(88, 101, 242, 0.4);
+  color: #ffffff;
+  padding: 0.7rem 1.3rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.8);
+  animation: toast-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.toast i {
+  color: var(--accent-purple);
+}
+
+.toast.toast-out {
+  animation: toast-out 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ============================================================
+   Animações
+   ============================================================ */
 
 @keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-8px); }
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(20px) scale(0.9); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes toast-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(10px) scale(0.95); }
+}
+
+/* ============================================================
+   Responsividade — telas menores que 580px
+   ============================================================ */
+
+@media (max-width: 580px) {
+  .title {
+    font-size: 2.6rem;
   }
-  50% {
-    transform: translateY(-5px);
+
+  .horizontal-card-body {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1rem;
+    padding: 0 1.25rem 1.25rem 1.25rem;
+    margin-top: -50px;
+  }
+
+  .profile-right {
+    width: 100%;
+    align-items: center;
+    padding-top: 0;
+  }
+
+  .user-header {
+    justify-content: center;
+  }
+
+  .icons-bar {
+    gap: 1.2rem;
+    padding: 1.25rem;
+  }
+
+  .divider-line {
+    width: 85%;
   }
 }

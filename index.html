@@ -4,11 +4,147 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>montyaxx.com</title>
+    <meta name="description" content="montyaxx.com" />
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <!-- FontAwesome Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
     <link rel="stylesheet" href="styles/main.css" />
   </head>
   <body>
-    <div class="container">
-      <a href="https://montyaxx.com/" class="title">montyaxx.com</a>
+    <!-- Canvas do fundo animado com partículas -->
+    <canvas id="bg-canvas"></canvas>
+
+    <div class="app-container">
+      <!-- Tela inicial -->
+      <main id="intro-screen" class="intro-screen">
+        <div class="title-wrapper" id="title-wrapper" role="button" tabindex="0" aria-label="Abrir perfil">
+          <h1 class="title">montyaxx.com</h1>
+        </div>
+      </main>
+
+      <!-- Card com o perfil do Discord -->
+      <section id="profile-section" class="profile-section hidden" aria-hidden="true">
+        <div class="horizontal-card" id="glass-card">
+          
+          <!-- Banner de fundo do perfil -->
+          <div class="card-banner" id="card-banner"></div>
+
+          <div class="horizontal-card-body">
+            
+            <!-- Avatar, indicador de status e botão de copiar a tag -->
+            <div class="profile-left">
+              <div class="avatar-wrapper" id="avatar-wrapper">
+                <img
+                  id="discord-avatar"
+                  src="https://cdn.discordapp.com/embed/avatars/0.png"
+                  alt="Avatar de montyaxx"
+                  class="avatar-img"
+                />
+                <div id="status-badge" class="status-badge offline" title="Status: Offline">
+                  <span class="status-indicator"></span>
+                </div>
+              </div>
+
+              <button id="copy-tag-btn" class="copy-tag-btn" title="Copiar tag do Discord">
+                <i class="fa-brands fa-discord"></i>
+                <span id="discord-username-text">@montyaxx</span>
+                <i class="fa-regular fa-copy copy-icon"></i>
+              </button>
+            </div>
+
+            <!-- Nome do usuário e atividade -->
+            <div class="profile-right">
+              <div class="user-header">
+                <div class="user-titles">
+                  <h2 id="user-global-name" class="user-name">montyaxx</h2>
+                </div>
+              </div>
+
+              <div id="activity-box" class="activity-box">
+                <div class="activity-loading">
+                  <i class="fa-solid fa-spinner fa-spin"></i>
+                  <span>Carregando status do Discord...</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="divider-line"></div>
+
+          <!-- Ícones e links -->
+          <div class="icons-bar">
+            <a
+              href="https://github.com/montyaxx/montyaxx.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="icon-link github-icon"
+              data-tooltip="Repositório desse Site"
+              aria-label="Repositório do Site no GitHub"
+            >
+              <i class="fa-brands fa-github"></i>
+            </a>
+
+            <a
+              href="https://laby.net/pt/@montyaxx"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="icon-link laby-icon"
+              data-tooltip="Laby.net"
+              aria-label="Laby.net"
+            >
+              <img src="images/laby.png" alt="Laby.net" class="custom-icon-img" />
+            </a>
+
+            <a
+              href="https://steamcommunity.com/profiles/76561199246579665/"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="icon-link steam-icon"
+              data-tooltip="Perfil da Steam"
+              aria-label="Perfil da Steam"
+            >
+              <i class="fa-brands fa-steam"></i>
+            </a>
+
+            <a
+              href="https://minecraftoverlay.online/"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="icon-link mc-icon"
+              data-tooltip="Minecraft Overlay"
+              aria-label="Minecraft Overlay"
+            >
+              <img src="images/mco.png" alt="Minecraft Overlay" class="custom-icon-img" />
+            </a>
+
+            <a
+              href="https://open.spotify.com/playlist/7kwm8YOJwsCcnfixrX0Ixw?si=ad364d3151cd4137"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="icon-link spotify-icon"
+              data-tooltip="Essa playlist é boa"
+              aria-label="Spotify Playlist"
+            >
+              <i class="fa-brands fa-spotify"></i>
+            </a>
+          </div>
+
+        </div>
+      </section>
     </div>
+
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="scripts/app.js"></script>
   </body>
 </html>
