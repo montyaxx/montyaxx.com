@@ -164,13 +164,8 @@ function updateUIWithLanyardData(data) {
   const user   = data.discord_user;
   const status = data.discord_status || 'offline';
 
-  // Banner: CDN do Discord se disponível, senão usa o arquivo local
-  if (user && user.banner) {
-    const ext = user.banner.startsWith('a_') ? 'gif' : 'png';
-    cardBanner.style.backgroundImage = `url('https://cdn.discordapp.com/banners/${user.id}/${user.banner}.${ext}?size=600')`;
-  } else {
-    cardBanner.style.backgroundImage = `url('${CONFIG.FALLBACK_BANNER}')`;
-  }
+  // Mantém o banner escolhido para o site, mesmo quando o Discord fornece outro.
+  cardBanner.style.backgroundImage = `url('${CONFIG.FALLBACK_BANNER}')`;
 
   // Avatar
   discordAvatar.src = user && user.avatar

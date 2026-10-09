@@ -502,7 +502,7 @@ body {
   color: #ffffff;
 }
 
-/* Imagens PNG usadas no lugar dos ícones FontAwesome */
+/* Ícones de imagem usados no lugar dos ícones FontAwesome */
 .custom-icon-img {
   width: 26px;
   height: 26px;
@@ -516,7 +516,7 @@ body {
   filter: brightness(1);
 }
 
-/* O ícone do Minecraft Overlay fica sem saturação em repouso */
+/* Minecraft Overlay e osu! ficam sem saturação em repouso */
 .mc-icon .custom-icon-img {
   filter: grayscale(1) brightness(0.75);
 }
@@ -525,12 +525,20 @@ body {
   filter: grayscale(0) brightness(1);
 }
 
+.osu-icon .custom-icon-img {
+  filter: grayscale(1) brightness(0.75);
+}
+
+.osu-icon:hover .custom-icon-img {
+  filter: grayscale(0) brightness(1);
+}
+
 /* ---- Cores de hover por plataforma ---- */
 
-.github-icon:hover {
-  background: #24292e;
+.osu-icon:hover {
+  background: #ff66aa;
   color: #ffffff;
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 15px rgba(255, 102, 170, 0.55);
 }
 
 .laby-icon:hover {
