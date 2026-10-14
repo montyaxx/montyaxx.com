@@ -8,20 +8,22 @@ const CONFIG = {
   DEFAULT_USERNAME: 'montyaxx',
   LANYARD_REST_URL: 'https://api.lanyard.rest/v1/users/',
   LANYARD_WS_URL: 'wss://api.lanyard.rest/socket',
-  POLL_INTERVAL: 30000, // Polling de fallback a cada 30s; o WebSocket cobre atualizações em tempo real
-  FALLBACK_BANNER: 'images/banner.png',
+  POLL_INTERVAL: 30000, // Polling REST a cada 30s, só enquanto o WebSocket (tempo real) estiver fechado
+  RECONNECT_BASE: 5000, // Espera inicial para reconectar o WebSocket; dobra a cada falha
+  RECONNECT_MAX: 60000,
 };
 
 // Estado da aplicação
 let spotifyTimer = null;   // Referência ao setInterval do progresso do Spotify
 let lanyardSocket = null;  // Instância do WebSocket Lanyard
-let pollInterval = null;   // Referência única ao setInterval de polling REST
+let heartbeatTimer = null; // Heartbeat exigido pelo Lanyard para manter o WebSocket aberto
+let hasData = false;       // true após a primeira atualização bem-sucedida da UI
+let reconnectDelay = CONFIG.RECONNECT_BASE;
 
 // Elementos do DOM
 const introScreen        = document.getElementById('intro-screen');
 const titleWrapper       = document.getElementById('title-wrapper');
 const profileSection     = document.getElementById('profile-section');
-const cardBanner         = document.getElementById('card-banner');
 const discordAvatar      = document.getElementById('discord-avatar');
 const statusBadge        = document.getElementById('status-badge');
 const copyTagBtn         = document.getElementById('copy-tag-btn');
@@ -52,6 +54,10 @@ function initApp() {
   initBackgroundCanvas();
   setupEventListeners();
   fetchLanyardData();
+  setInterval(() => {
+    // Fallback: evita que uma resposta REST antiga sobrescreva uma atualização mais nova do WebSocket
+    if (lanyardSocket?.readyState !== WebSocket.OPEN) fetchLanyardData();
+  }, CONFIG.POLL_INTERVAL);
   connectLanyardWebSocket();
 }
 
@@ -76,24 +82,29 @@ function setupEventListeners() {
   copyTagBtn.addEventListener('click', () => {
     navigator.clipboard
       .writeText(CONFIG.DEFAULT_USERNAME)
-      .then(() => showToast('<i class="fa-brands fa-discord"></i> Tag @montyaxx copiada!'))
-      .catch(() => showToast('<i class="fa-solid fa-check"></i> Tag montyaxx copiada!'));
+      .then(() => showToast('<i class="fa-brands fa-discord"></i> Usuário do Discord copiado!'))
+      .catch(() => showToast('<i class="fa-solid fa-xmark"></i> Não foi possível copiar o usuário.'));
   });
 }
 
+// `inert` tira a tela oculta da ordem de foco (Tab) e dos leitores de tela; só uma das duas fica ativa
 function openProfile() {
   introScreen.classList.add('fade-out');
+  introScreen.inert = true;
   setTimeout(() => {
     profileSection.classList.remove('hidden');
-    profileSection.setAttribute('aria-hidden', 'false');
+    profileSection.inert = false;
+    copyTagBtn.focus({ preventScroll: true }); // o título some; leva o foco do teclado para o perfil
   }, 200);
 }
 
 function closeProfile() {
   profileSection.classList.add('hidden');
-  profileSection.setAttribute('aria-hidden', 'true');
+  profileSection.inert = true;
   setTimeout(() => {
     introScreen.classList.remove('fade-out');
+    introScreen.inert = false;
+    titleWrapper.focus({ preventScroll: true });
   }, 200);
 }
 
@@ -110,33 +121,37 @@ async function fetchLanyardData() {
       updateUIWithLanyardData(json.data);
     }
   } catch (error) {
-    console.warn('Lanyard REST: usando perfil padrão.', error);
-    renderDefaultProfile();
+    console.warn('Lanyard REST: falha na requisição.', error);
+    // Só cai para o perfil padrão se nunca houve dados; senão mantém o último estado válido
+    if (!hasData) renderDefaultProfile();
   }
-}
-
-/** Inicia o polling REST garantindo que nunca existam dois intervals simultâneos */
-function startPolling() {
-  if (pollInterval) return;
-  pollInterval = setInterval(fetchLanyardData, CONFIG.POLL_INTERVAL);
 }
 
 function connectLanyardWebSocket() {
   try {
-    lanyardSocket = new WebSocket(CONFIG.LANYARD_WS_URL);
+    const socket = new WebSocket(CONFIG.LANYARD_WS_URL);
+    lanyardSocket = socket;
 
-    lanyardSocket.onopen = () => {
-      lanyardSocket.send(JSON.stringify({
+    socket.onopen = () => {
+      socket.send(JSON.stringify({
         op: 2,
         d: { subscribe_to_id: CONFIG.DISCORD_ID },
       }));
-      startPolling(); // Ativa o polling de fallback apenas após conexão bem-sucedida
     };
 
-    lanyardSocket.onmessage = (event) => {
+    socket.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
+        // op 1 = Hello: o Lanyard derruba a conexão se não receber heartbeat (op 3)
+        if (data.op === 1) {
+          clearInterval(heartbeatTimer);
+          heartbeatTimer = setInterval(() => {
+            if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ op: 3 }));
+          }, data.d.heartbeat_interval);
+          return;
+        }
         if (data.t === 'INIT_STATE' || data.t === 'PRESENCE_UPDATE') {
+          reconnectDelay = CONFIG.RECONNECT_BASE; // conexão saudável: zera o backoff
           updateUIWithLanyardData(data.d);
         }
       } catch (e) {
@@ -144,32 +159,31 @@ function connectLanyardWebSocket() {
       }
     };
 
-    lanyardSocket.onerror = () => {
+    socket.onerror = () => {
       // Fecha explicitamente para que o onclose dispare e faça a reconexão
-      lanyardSocket.close();
+      socket.close();
     };
 
-    lanyardSocket.onclose = () => {
+    socket.onclose = () => {
+      clearInterval(heartbeatTimer);
       lanyardSocket = null;
-      setTimeout(connectLanyardWebSocket, 5000);
+      setTimeout(connectLanyardWebSocket, reconnectDelay);
+      reconnectDelay = Math.min(reconnectDelay * 2, CONFIG.RECONNECT_MAX);
     };
 
   } catch (e) {
     console.warn('Lanyard WS: conexão falhou, usando apenas polling.');
-    startPolling();
   }
 }
 
 function updateUIWithLanyardData(data) {
+  hasData = true;
   const user   = data.discord_user;
-  const status = data.discord_status || 'offline';
-
-  // Mantém o banner escolhido para o site, mesmo quando o Discord fornece outro.
-  cardBanner.style.backgroundImage = `url('${CONFIG.FALLBACK_BANNER}')`;
+  const status = ['online', 'idle', 'dnd'].includes(data.discord_status) ? data.discord_status : 'offline';
 
   // Avatar
   discordAvatar.src = user && user.avatar
-    ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=256`
+    ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=128`
     : 'https://cdn.discordapp.com/embed/avatars/0.png';
 
   // Nome de exibição (global_name tem prioridade sobre username)
@@ -252,7 +266,7 @@ function renderActivity(data) {
       const img = gameActivity.assets.large_image;
       if (img.startsWith('mp:external')) {
         iconUrl = `https://media.discordapp.net/${img.replace('mp:', '')}`;
-      } else if (!img.startsWith('spotify:')) {
+      } else if (/^\d+$/.test(img) && gameActivity.application_id) { // ignora spotify:, twitch:, youtube: etc.
         iconUrl = `https://cdn.discordapp.com/app-assets/${gameActivity.application_id}/${img}.png`;
       }
     }
@@ -317,7 +331,6 @@ function formatTime(ms) {
 
 /** Exibido quando a API falha — não assume nenhum status ativo */
 function renderDefaultProfile() {
-  cardBanner.style.backgroundImage = `url('${CONFIG.FALLBACK_BANNER}')`;
   discordAvatar.src = 'https://cdn.discordapp.com/embed/avatars/0.png';
   userGlobalName.textContent = CONFIG.DEFAULT_USERNAME;
   discordUsernameText.textContent = `@${CONFIG.DEFAULT_USERNAME}`;
@@ -374,7 +387,6 @@ function initBackgroundCanvas() {
   }));
 
   function animate() {
-    ctx.clearRect(0, 0, width, height);
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, width, height);
 
@@ -402,7 +414,8 @@ function initBackgroundCanvas() {
     ctx.shadowBlur  = 0;
     ctx.shadowColor = 'transparent';
 
-    requestAnimationFrame(animate);
+    // Com "reduzir movimento" ativo, desenha só o primeiro frame
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) requestAnimationFrame(animate);
   }
 
   animate();

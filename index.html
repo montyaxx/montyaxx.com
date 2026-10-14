@@ -4,7 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>montyaxx.com</title>
-    <meta name="description" content="montyaxx.com" />
+    <meta name="description" content="Perfil de montyaxx: Discord ao vivo, osu!, Steam, Spotify e outros links." />
+    <meta name="theme-color" content="#000000" />
+    <link rel="canonical" href="https://montyaxx.com/" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%235865f2'/%3E%3Ctext x='32' y='47' font-size='42' font-family='sans-serif' font-weight='700' text-anchor='middle' fill='white'%3Em%3C/text%3E%3C/svg%3E"
+    />
+    <!-- Open Graph: pré-visualização do link (Discord, redes sociais) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="montyaxx.com" />
+    <meta property="og:description" content="Perfil de montyaxx: Discord ao vivo, osu!, Steam, Spotify e outros links." />
+    <meta property="og:url" content="https://montyaxx.com/" />
+    <meta property="og:image" content="https://montyaxx.com/images/banner.webp" />
+    <meta name="twitter:card" content="summary_large_image" />
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -16,6 +29,9 @@
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+      integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
     />
     <link rel="stylesheet" href="styles/main.css" />
   </head>
@@ -32,7 +48,7 @@
       </main>
 
       <!-- Card com o perfil do Discord -->
-      <section id="profile-section" class="profile-section hidden" aria-hidden="true">
+      <section id="profile-section" class="profile-section hidden" inert>
         <div class="horizontal-card" id="glass-card">
           
           <!-- Banner de fundo do perfil -->
@@ -91,7 +107,7 @@
               data-tooltip="Meu perfil do osu!"
               aria-label="Meu perfil do osu!"
             >
-              <img src="images/osu.webp" alt="osu!" class="custom-icon-img" />
+              <img src="images/osu.webp" alt="osu!" class="custom-icon-img" width="26" height="26" />
             </a>
 
             <a
@@ -102,7 +118,7 @@
               data-tooltip="Laby.net"
               aria-label="Laby.net"
             >
-              <img src="images/laby.png" alt="Laby.net" class="custom-icon-img" />
+              <img src="images/laby.webp" alt="Laby.net" class="custom-icon-img" width="26" height="26" />
             </a>
 
             <a
@@ -124,7 +140,7 @@
               data-tooltip="Minecraft Overlay"
               aria-label="Minecraft Overlay"
             >
-              <img src="images/mco.png" alt="Minecraft Overlay" class="custom-icon-img" />
+              <img src="images/mco.webp" alt="Minecraft Overlay" class="custom-icon-img" width="26" height="26" />
             </a>
 
             <a
@@ -143,7 +159,7 @@
       </section>
     </div>
 
-    <div id="toast-container" class="toast-container"></div>
+    <div id="toast-container" class="toast-container" role="status" aria-live="polite"></div>
 
     <script src="scripts/app.js"></script>
   </body>
